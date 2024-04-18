@@ -36,7 +36,7 @@ namespace API.Controllers
             return BadRequest(request);
         }
 
-        [HttpPost("RefreshToken-Token")]
+        [HttpPost("RefreshToken")]
         public async Task<IActionResult> RefreshToken(RefreshTokenCommand command)
         {
             var request = await _mediator.Send(command);

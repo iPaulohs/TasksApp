@@ -1,4 +1,5 @@
 ﻿using Application.WorkspaceCQ.Comands;
+using Application.WorkspaceCQ.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,7 @@ namespace API.Controllers
         {
             var result = await _mediator.Send(command);
 
-            if(result.ErrorCode == 0)
+            if(result.ErrorCode is null)
             {
                 return Ok(result);
             }
@@ -28,7 +29,33 @@ namespace API.Controllers
         {
             var result = await _mediator.Send(command);
 
-            if (result.ErrorCode == 0)
+            if (result.ErrorCode is null)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest(result);
+        }
+
+        [HttpGet("Get-Workspace-By-Id")]
+        public async Task<IActionResult> GetWorkpaceById([FromQuery] GetWorkspaceByIdQuery query)
+        {
+            var result = await _mediator.Send(query);
+
+            if (result.ErrorCode is null)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest(result);
+        }
+
+        [HttpGet("Get-Workspace-By-UserId")]
+        public async Task<IActionResult> GetWorkpaceByUserId([FromQuery] GetAllWorkspacesByUserIdQuery query)
+        {
+            var result = await _mediator.Send(query);
+
+            if (result.ErrorCode is null)
             {
                 return Ok(result);
             }

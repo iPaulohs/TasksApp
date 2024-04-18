@@ -4,6 +4,7 @@ using Infra.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infra.Migrations
 {
     [DbContext(typeof(TasksDbContext))]
-    partial class TasksDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240414163214_V2")]
+    partial class V2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,9 +52,14 @@ namespace Infra.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("WorkspaceId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ListId");
+
+                    b.HasIndex("WorkspaceId");
 
                     b.ToTable("Cards");
                 });
@@ -143,18 +151,26 @@ namespace Infra.Migrations
                         .WithMany("Cards")
                         .HasForeignKey("ListId");
 
+                    b.HasOne("Domain.Entity.Workspace", "Workspace")
+                        .WithMany("Cards")
+                        .HasForeignKey("WorkspaceId");
+
                     b.Navigation("List");
+
+                    b.Navigation("Workspace");
                 });
 
             modelBuilder.Entity("Domain.Entity.ListCard", b =>
                 {
-                    b.HasOne("Domain.Entity.User", null)
+                    b.HasOne("Domain.Entity.User", "User")
                         .WithMany("Lists")
                         .HasForeignKey("UserId");
 
                     b.HasOne("Domain.Entity.Workspace", "Workspace")
                         .WithMany("List")
                         .HasForeignKey("WorkspaceId");
+
+                    b.Navigation("User");
 
                     b.Navigation("Workspace");
                 });
@@ -182,6 +198,8 @@ namespace Infra.Migrations
 
             modelBuilder.Entity("Domain.Entity.Workspace", b =>
                 {
+                    b.Navigation("Cards");
+
                     b.Navigation("List");
                 });
 #pragma warning restore 612, 618

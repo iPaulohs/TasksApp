@@ -1,8 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Security.Claims;
-
-namespace Domain.Abstract
-{ 
+﻿namespace Domain.Abstract
+{
     public interface IAuthService
     {
         public string GenerateJWT(string email, string Username);
@@ -10,6 +7,6 @@ namespace Domain.Abstract
         public bool VerifyUniqueUsername(string Username);
         public bool VerifyUniqueEmail(string email);
         public string GenerateRefreshJWT();
-        public ClaimsPrincipal GetPrincipalFromExpiredToken(string token, IConfiguration configuration);
+        bool GetTokenIsValid(string username);
     }
 }

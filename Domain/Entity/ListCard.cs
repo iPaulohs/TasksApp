@@ -7,7 +7,5 @@
         public ICollection<Card>? Cards { get; set; }
         public Workspace? Workspace { get; set; }
         public bool Arquived { get; set; }
-        public User? User { get; set; }
-
     }
 }

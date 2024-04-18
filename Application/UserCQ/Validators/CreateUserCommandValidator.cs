@@ -7,7 +7,7 @@ namespace Application.UserCQ.Validators
     public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
     {
         private readonly TasksDbContext _context;
-        public CreateUserCommandValidator(TasksDbContext context) 
+        public CreateUserCommandValidator(TasksDbContext context)
         {
             _context = context;
 

@@ -15,10 +15,10 @@ namespace Infra.Repository
 
         public IUserRepository IUserRepository => userRepository ?? new UserRepository(_context);
 
-        public async void CommitAsync()
+        public void CommitAsync()
         {
-            await _context.SaveChangesAsync();
-            await _context.DisposeAsync();
+            _context.SaveChanges();
+            _context.Dispose();
         }
     }
 }

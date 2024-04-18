@@ -20,8 +20,12 @@ namespace Application.WorkspaceCQ.Handlers
             {
                 return new ResponseBase<WorkspaceViewModel>
                 {
-                    ErrorCode = ErrorCodes.WorkspaceNotFound,
-                    Message = "Workspace não encontrado.",
+                    Info = new()
+                    {
+                        Title = "Workpace não encontrado",
+                        StatusMessage = $"Não foi encontrado nenhum workspace com o 'Id' {request.Id}",
+                        Status = 400
+                    },
                     Response = null
                 };
             }
@@ -35,8 +39,7 @@ namespace Application.WorkspaceCQ.Handlers
 
             return new ResponseBase<WorkspaceViewModel>
             {
-                ErrorCode = null,
-                Message = null,
+                Info = null,
                 Response = _workspace
             };
         }

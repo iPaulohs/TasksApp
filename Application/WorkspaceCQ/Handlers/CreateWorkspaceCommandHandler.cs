@@ -4,7 +4,6 @@ using Application.WorkspaceCQ.ViewModels;
 using Domain.Abstract;
 using Domain.Entity;
 using MediatR;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Application.WorkspaceCQ.Handlers
 {
@@ -13,14 +12,18 @@ namespace Application.WorkspaceCQ.Handlers
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
         public async Task<ResponseBase<WorkspaceViewModel>> Handle(CreateWorkspaceCommand request, CancellationToken cancellationToken)
         {
-            var user = _unitOfWork.IUserRepository.Get(x => x.Id.ToLower() == request.UserId.ToLower());
+            var user = _unitOfWork.IUserRepository.Get(x => x.Id == request.UserId);
 
-            if (user == null)
+            if (user is null)
             {
                 return new ResponseBase<WorkspaceViewModel>
                 {
-                    ErrorCode = ErrorCodes.UserNotFound,
-                    Message = "Usuário não encontrado.",
+                    Info = new()
+                    {
+                        Title = "Usuário não encontrado",
+                        StatusMessage = $"Não foi encontrado nenhum usuário com o 'Id' {request.UserId}",
+                        Status = 400
+                    },
                     Response = null
                 };
             }
@@ -37,8 +40,7 @@ namespace Application.WorkspaceCQ.Handlers
 
             return new ResponseBase<WorkspaceViewModel>
             {
-                ErrorCode = null,
-                Message = null,
+                Info = null,
                 Response = new WorkspaceViewModel
                 {
                     Title = workspace.Title,

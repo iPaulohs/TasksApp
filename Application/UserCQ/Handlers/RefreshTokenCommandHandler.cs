@@ -2,72 +2,52 @@
 using Application.UserCQ.Commands;
 using Application.UserCQ.ViewModels;
 using Domain.Abstract;
-using Domain.Entity;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace Application.UserCQ.Handlers
 {
-    public class RefreshTokenCommandHandler(IAuthService authService, IConfiguration configuration, UserManager<User> userManager) : IRequestHandler<RefreshTokenCommand, ResponseBase<UserInfoViewModel>>
+    public class RefreshTokenCommandHandler(IAuthService authService, IConfiguration configuration, IUnitOfWork unitOfWork) : IRequestHandler<RefreshTokenCommand, ResponseBase<RefreshTokenViewModel>>
     {
         private readonly IAuthService _authService = authService;
         private readonly IConfiguration _configuration = configuration;
-        private readonly UserManager<User> _userManager = userManager;
-        public async Task<ResponseBase<UserInfoViewModel>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        public async Task<ResponseBase<RefreshTokenViewModel>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
-            string accessToken = request.ExpiredToken!;
-            string refreshToken = request.RefreshToken!;
+            var user = _unitOfWork.IUserRepository.Get(x => x.Username == request.Username);
 
-            var principal = _authService.GetPrincipalFromExpiredToken(accessToken, _configuration);
-
-            if(principal is null)
+            if (user is null || user.RefreshToken != request.RefreshToken! || user.RefreshTokenExpirationTime < DateTime.Now)
             {
-                return new ResponseBase<UserInfoViewModel>
+                return new ResponseBase<RefreshTokenViewModel>
                 {
-                    ErrorCode = ErrorCodes.PrincipalNotFound,
-                    Message = "Token inválido para a operaçao de refresh token.",
+                    Info = new()
+                    {
+                        Title = "Token inválido",
+                        StatusMessage = $"Refresh Token inválido ou expirado. Faça login novamente.",
+                        Status = 400
+                    },
                     Response = null
                 };
             }
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jwtToken = (JwtSecurityToken)tokenHandler.ReadToken(accessToken);
+            user.RefreshToken = _authService.GenerateRefreshJWT();
+            _ = int.TryParse(_configuration["JWT:RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
+            user.RefreshTokenExpirationTime = DateTime.Now.AddDays(refreshTokenValidityInDays);
+            await _unitOfWork.IUserRepository.Update(user);
+            _unitOfWork.CommitAsync();
 
-            string username = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "Username" )?.Value;
-
-            Console.WriteLine(username);
-
-            var user = await _userManager.FindByNameAsync(username!);
-
-            if(user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpirationTime >= DateTime.Now)
+            return new ResponseBase<RefreshTokenViewModel>
             {
-                return new ResponseBase<UserInfoViewModel>
-                {
-                    ErrorCode = ErrorCodes.InvalidTokenRefreshToken,
-                    Message = "Token inválido ou nao expirado para a operaçao de refresh token.",
-                    Response = null
-                };
-            }
-
-            var newRefreshToken = _authService.GenerateRefreshJWT();
-            user.RefreshToken = newRefreshToken;
-            await _userManager.UpdateAsync(user);
-
-            return new ResponseBase<UserInfoViewModel>
-            {
-                ErrorCode = null,
-                Message = null,
-                Response = new UserInfoViewModel
+                Info = null,
+                Response = new RefreshTokenViewModel
                 {
                     Id = user.Id,
                     Name = user.Name,
                     Surname = user.Surname,
                     Email = user.Email,
-                    Username = user.UserName,
-                    Token = _authService.GenerateJWT(user.Email!, user.UserName!),
-                    RefreshToken = newRefreshToken
+                    Username = user.Username,
+                    RefreshToken = user.RefreshToken,
+                    Token = _authService.GenerateJWT(user.Email!, user.Username!)
                 }
             };
         }

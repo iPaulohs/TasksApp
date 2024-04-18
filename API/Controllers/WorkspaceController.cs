@@ -14,53 +14,27 @@ namespace API.Controllers
         [HttpPost("Create-Workspace")]
         public async Task<IActionResult> CreateWorkspace(CreateWorkspaceCommand command)
         {
-            var result = await _mediator.Send(command);
+            var request = await _mediator.Send(command);
 
-            if(result.ErrorCode is null)
+            if (request.Info is null)
             {
-                return Ok(result);
+                return Ok(request.Response);
             }
 
-            return BadRequest(result);
+            return BadRequest(request.Info);
         }
 
         [HttpPost("Update-Workspace")]
         public async Task<IActionResult> UpdateWorkspace(UpdateWorkspaceCommand command)
         {
-            var result = await _mediator.Send(command);
+            var request = await _mediator.Send(command);
 
-            if (result.ErrorCode is null)
+            if (request.Info is null)
             {
-                return Ok(result);
+                return Ok(request.Response);
             }
 
-            return BadRequest(result);
-        }
-
-        [HttpGet("Get-Workspace-By-Id")]
-        public async Task<IActionResult> GetWorkpaceById([FromQuery] GetWorkspaceByIdQuery query)
-        {
-            var result = await _mediator.Send(query);
-
-            if (result.ErrorCode is null)
-            {
-                return Ok(result);
-            }
-
-            return BadRequest(result);
-        }
-
-        [HttpGet("Get-Workspace-By-UserId")]
-        public async Task<IActionResult> GetWorkpaceByUserId([FromQuery] GetAllWorkspacesByUserIdQuery query)
-        {
-            var result = await _mediator.Send(query);
-
-            if (result.ErrorCode is null)
-            {
-                return Ok(result);
-            }
-
-            return BadRequest(result);
+            return BadRequest(request.Info);
         }
     }
 }

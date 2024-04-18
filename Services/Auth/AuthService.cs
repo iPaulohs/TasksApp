@@ -1,5 +1,4 @@
 ﻿using Domain.Abstract;
-using Infra.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,9 +8,9 @@ using System.Text;
 
 namespace Services.Auth
 {
-    public class AuthService(IConfiguration configuration, TasksDbContext context) : IAuthService
+    public class AuthService(IConfiguration configuration, IUnitOfWork unitOfWork) : IAuthService
     {
-        private readonly TasksDbContext _context = context;
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
         private readonly IConfiguration _configuration = configuration;
 
         public string GenerateJWT(string email, string Username)
@@ -24,20 +23,20 @@ namespace Services.Auth
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
-        {
-            new("email", email),
-            new("Username", Username),
-            new("aleatoryGuid", Guid.NewGuid().ToString()),
-            new("aleatoryTime", DateTime.Now.ToString())
-        };
+            {
+                new("emailAdress", email),
+                new("Username", Username),
+                new("emailIdentifier", email.Split("@").ToString()!),
+                new("currentTime", DateTime.Now.ToString())
+            };
 
-            var token = new JwtSecurityToken(issuer: issuer, audience: audience, expires: DateTime.Now.AddHours(24), signingCredentials: credentials, claims: claims);
+            var token = new JwtSecurityToken(issuer: issuer, audience: audience, expires: DateTime.Now.AddHours(48), signingCredentials: credentials, claims: claims);
             var tokenHandler = new JwtSecurityTokenHandler();
 
             return tokenHandler.WriteToken(token);
         }
 
-        public string GenerateRefreshJWT() 
+        public string GenerateRefreshJWT()
         {
             var secureRandomBytes = new byte[128];
 
@@ -51,56 +50,33 @@ namespace Services.Auth
         }
 
 
-        public ClaimsPrincipal GetPrincipalFromExpiredToken(string token, IConfiguration configuration)
+        public bool GetTokenIsValid(string username)
         {
-            var key = configuration["JWT:Key"] ?? throw new InvalidOperationException("Invalid key");
-
-            var tokenParameters = new TokenValidationParameters
-            {
-                ValidateAudience = false,
-                ValidateIssuer = false,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!)),
-                ValidateLifetime = false
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, tokenParameters, out SecurityToken securityToken);
-
-            if(securityToken is not JwtSecurityToken jwtSecurityToekn || !jwtSecurityToekn.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new SecurityTokenException("Invalid token");
-            }
-
-            return principal;
+            return _unitOfWork.IUserRepository.Get(x => x.Username == username) is null;
         }
 
         public string HashingUserPassword(string password)
         {
-            using (SHA256 sha256Hash = SHA256.Create())
+            byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+
+            StringBuilder builder = new();
+
+            for (int i = 0; i < bytes.Length; i++)
             {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(password));
-
-                StringBuilder builder = new();
-
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2")); //x2 faz a conversão do valor em uma representação hexadecimal
-                }
-
-                return builder.ToString();
+                builder.Append(bytes[i].ToString("x2")); //x2 faz a conversão do valor em uma representação hexadecimal
             }
+
+            return builder.ToString();
         }
 
         public bool VerifyUniqueUsername(string userName)
         {
-            var result = _context.Users.Any(x => x.UserName == userName);
-            return result == false;
+            return _unitOfWork.IUserRepository.Get(x => x.Username == userName) is null;
         }
 
         public bool VerifyUniqueEmail(string email)
         {
-            var result = _context.Users.Any(x => x.Email == email);
-            return result == false;
+            return _unitOfWork.IUserRepository.Get(x => x.Email == email) is null;
         }
     }
 }

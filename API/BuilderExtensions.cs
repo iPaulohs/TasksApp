@@ -1,18 +1,16 @@
-﻿using Application.UserCQ.Commands;
-using Domain.Entity;
-using Infra.Persistence;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Services.Auth;
-using FluentValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Domain.Abstract;
-using FluentValidation.AspNetCore;
+﻿using Application.Mappings;
+using Application.UserCQ.Commands;
 using Application.UserCQ.Validators;
+using Domain.Abstract;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Infra.Persistence;
 using Infra.Repository;
-using Application.Mappings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Services.Auth;
+using System.Text;
 
 namespace API
 {
@@ -40,23 +38,20 @@ namespace API
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
                 };
-            });
-            builder.Services.Configure<IdentityOptions>(opt =>
+            })
+            .AddCookie(options =>
             {
-                opt.Password.RequireNonAlphanumeric = false;
-                opt.Password.RequireUppercase = false;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.ExpireTimeSpan = TimeSpan.FromHours(24);
             });
         }
 
-        public static void AddAppPersistence(this WebApplicationBuilder builder)
+        public static void AddPersistence(this WebApplicationBuilder builder)
         {
             var configuration = builder.Configuration;
             builder.Services.AddDbContext<TasksDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("TasksDefaulConnectionString")));
-        }
-
-        public static void AddAppIdentity(this WebApplicationBuilder builder)
-        {
-            builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<TasksDbContext>().AddDefaultTokenProviders(); 
         }
 
         public static void AddAppInjections(this WebApplicationBuilder builder)

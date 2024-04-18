@@ -7,8 +7,7 @@ namespace Application.UserCQ.Validators
     {
         public RefreshTokenCommandValidator()
         {
-            RuleFor(x => x.RefreshToken).NotEmpty().WithMessage("Campo 'Token' nao pode estar vazio.");
-            RuleFor(x => x.ExpiredToken).NotEmpty().WithMessage("Campo 'ExpiredToken' nao pode estar vazio.");
+            RuleFor(x => x.Username).NotEmpty().WithMessage("Campo 'Username' nao pode estar vazio.");
         }
     }
 }

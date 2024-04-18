@@ -2,66 +2,70 @@
 using Application.UserCQ.Commands;
 using Application.UserCQ.ViewModels;
 using Domain.Abstract;
-using Domain.Entity;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 
 namespace Application.UserCQ.Handlers
 {
-    public class LoginUserCommandHandler(IAuthService authService, SignInManager<User> signInManager, UserManager<User> userManager, IConfiguration configuration) : IRequestHandler<LoginUserCommand, ResponseBase<UserInfoViewModel>>
+    public class LoginUserCommandHandler(IAuthService authService, IUnitOfWork unitOfWork, IConfiguration configuration) : IRequestHandler<LoginUserCommand, ResponseBase<RefreshTokenViewModel>>
     {
-        private readonly UserManager<User> _userManager = userManager;
         private readonly IAuthService _authService = authService;
-        private readonly SignInManager<User> _signInManager = signInManager;
         private readonly IConfiguration _configuration = configuration;
-        public async Task<ResponseBase<UserInfoViewModel>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        public async Task<ResponseBase<RefreshTokenViewModel>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email!);
+            var user = _unitOfWork.IUserRepository.Get(x => x.Email!.ToLower() == request.Email!.ToLower());
 
             if (user is null)
             {
-                return new ResponseBase<UserInfoViewModel>
+                return new ResponseBase<RefreshTokenViewModel>
                 {
-                    ErrorCode = ErrorCodes.LoginFailed,
-                    Message = "Usuário não encontrado.",
+                    Info = new()
+                    {
+                        Title = "Usuário não encontrado",
+                        StatusMessage = $"Não foi encontrado nenhum usuário com o 'email' {request.Email}",
+                        Status = 400
+                    },
                     Response = null
                 };
             }
 
             var passwordHash = _authService.HashingUserPassword(request.Password!);
-            var refreshToken = _authService.GenerateRefreshJWT();
-            _ = int.TryParse(_configuration["JWT:RefreshTokenValidityInMinutes"], out int refreshTokenValidityInMinutes);
+            _ = int.TryParse(_configuration["JWT:RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
 
-            var result = await _signInManager.PasswordSignInAsync(user, passwordHash, false, false);
+            var result = user.PasswordHash == passwordHash;
 
-            if (result.Succeeded)
+            if (result)
             {
-                user.RefreshToken = refreshToken;
-                user.RefreshTokenExpirationTime = DateTime.Now.AddSeconds(25);
-                await _userManager.UpdateAsync(user);
+                user.RefreshToken = _authService.GenerateRefreshJWT();
+                user.RefreshTokenExpirationTime = DateTime.Now.AddDays(refreshTokenValidityInDays);
+                await _unitOfWork.IUserRepository.Update(user);
+                _unitOfWork.CommitAsync();
 
-                return new ResponseBase<UserInfoViewModel>
+                return new ResponseBase<RefreshTokenViewModel>
                 {
-                    ErrorCode = null,
-                    Message = null,
-                    Response = new UserInfoViewModel
+                    Info = null,
+                    Response = new RefreshTokenViewModel
                     {
                         Id = user.Id,
                         Name = user.Name,
                         Surname = user.Surname,
                         Email = user.Email,
-                        Username = user.UserName,
-                        Token = _authService.GenerateJWT(user.Email!, user.UserName!),
-                        RefreshToken = refreshToken
+                        Username = user.Username,
+                        RefreshToken = user.RefreshToken,
+                        Token = _authService.GenerateJWT(user.Email!, user.Username!)
                     }
                 };
             }
 
-            return new ResponseBase<UserInfoViewModel>
+            return new ResponseBase<RefreshTokenViewModel>
             {
-                ErrorCode = ErrorCodes.LoginFailed,
-                Message = "O login falhou. Verifique os dados e tente novamente.",
+                Info = new()
+                {
+                    Title = "Falha no login",
+                    StatusMessage = $"Email ou senha incorretos.",
+                    Status = 500
+                },
                 Response = null
             }; ;
         }

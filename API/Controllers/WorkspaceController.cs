@@ -13,27 +13,27 @@ namespace API.Controllers
         [HttpPost("Create-Workspace")]
         public async Task<IActionResult> CreateWorkspace(CreateWorkspaceCommand command)
         {
-            var result = await _mediator.Send(command);
+            var request = await _mediator.Send(command);
 
-            if(result.ErrorCode == 0)
+            if (request.Info is null)
             {
-                return Ok(result);
+                return Ok(request.Response);
             }
 
-            return BadRequest(result);
+            return BadRequest(request.Info);
         }
 
         [HttpPost("Update-Workspace")]
         public async Task<IActionResult> UpdateWorkspace(UpdateWorkspaceCommand command)
         {
-            var result = await _mediator.Send(command);
+            var request = await _mediator.Send(command);
 
-            if (result.ErrorCode == 0)
+            if (request.Info is null)
             {
-                return Ok(result);
+                return Ok(request.Response);
             }
 
-            return BadRequest(result);
+            return BadRequest(request.Info);
         }
     }
 }

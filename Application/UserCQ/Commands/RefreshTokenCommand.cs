@@ -4,9 +4,9 @@ using MediatR;
 
 namespace Application.UserCQ.Commands
 {
-    public record RefreshTokenCommand : IRequest<ResponseBase<UserInfoViewModel>>
+    public record RefreshTokenCommand : IRequest<ResponseBase<RefreshTokenViewModel>>
     {
-        public string? ExpiredToken { get; set; }
+        public string? Username { get; set; }
         public string? RefreshToken { get; set; }
     }
 }

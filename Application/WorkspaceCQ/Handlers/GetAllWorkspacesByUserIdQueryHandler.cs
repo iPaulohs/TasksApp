@@ -14,14 +14,18 @@ namespace Application.WorkspaceCQ.Handlers
 
         public async Task<ResponseBase<List<WorkspaceViewModel>>> Handle(GetAllWorkspacesByUserIdQuery request, CancellationToken cancellationToken)
         {
-            var user = _unitOfWork.IUserRepository.Get(x => x.Id == request.UserId.ToString());
+            var user = _unitOfWork.IUserRepository.Get(x => x.Id == request.UserId);
 
             if(user is null)
             {
-                return new ResponseBase<List<WorkspaceViewModel>>
+                return new()
                 {
-                    ErrorCode = ErrorCodes.UserNotFound,
-                    Message = "Usuário não encontrado.",
+                    Info = new()
+                    {
+                        Title = "Usuário não encontrado",
+                        StatusMessage = "Nenhum usuário encontrado com o Id informado.",
+                        Status = 404
+                    },
                     Response = null
                 };
             }
@@ -30,8 +34,7 @@ namespace Application.WorkspaceCQ.Handlers
 
             return new ResponseBase<List<WorkspaceViewModel>>
             {
-                ErrorCode = null,
-                Message = null,
+                Info = null,
                 Response = _mapper.Map<List<WorkspaceViewModel>>(workspaces)
             };
         }

@@ -17,18 +17,21 @@ namespace Application.WorkspaceCQ.Handlers
 
             if (workspace == null)
             {
-                return new ResponseBase<WorkspaceViewModel>
+                return new()
                 {
-                    ErrorCode = ErrorCodes.WorkspaceNotFound,
-                    Message = "Workspace não encontrado.",
+                    Info = new()
+                    {
+                        Title = "Workspace não encontrado",
+                        StatusMessage = "Nenhum Workspace encontrado com o Id informado.",
+                        Status = 404
+                    },
                     Response = null
                 };
             }
 
             return new ResponseBase<WorkspaceViewModel>
             {
-                ErrorCode = null,
-                Message = null,
+                Info = null,
                 Response = _mapper.Map<WorkspaceViewModel>(workspace)
             };
         }

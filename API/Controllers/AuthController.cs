@@ -46,19 +46,11 @@ namespace API.Controllers
 
                     Response.Cookies.Append("jwt", request.Response!.Token!, cookieOptionsToken);
                     Response.Cookies.Append("refreshToken", request.Response!.RefreshToken!, cookieOptionsRefreshToken);
-                    return Ok(new ResponseBase<UserInfoViewModel>
-                    {
-                        Info = null,
-                        Response = _mapper.Map<UserInfoViewModel>(request.Response)
-                    });
+                    return Ok(request);
                 }
             }
 
-            return BadRequest(new ResponseBase<UserInfoViewModel>
-            {
-                Info = request.Info,
-                Response = null
-            });
+            return BadRequest(request);
         }
 
         [HttpPost("Login")]
@@ -92,19 +84,11 @@ namespace API.Controllers
 
                     Response.Cookies.Append("jwt", request.Response!.Token!, cookieOptionsToken);
                     Response.Cookies.Append("refreshToken", request.Response!.RefreshToken!, cookieOptionsRefreshToken);
-                    return Ok(new ResponseBase<UserInfoViewModel>
-                    {
-                        Info = null,
-                        Response = _mapper.Map<UserInfoViewModel>(request.Response)
-                    });
+                    return Ok(request);
                 }
             }
 
-            return BadRequest(new ResponseBase<UserInfoViewModel>
-            {
-                Info = request.Info,
-                Response = null
-            });
+            return BadRequest(request);
         }
 
         [HttpPost("Refresh-Token")]
@@ -137,18 +121,10 @@ namespace API.Controllers
 
                 Response.Cookies.Append("jwt", request.Response!.Token!, cookieOptionsToken);
                 Response.Cookies.Append("refreshToken", request.Response!.RefreshToken!, cookieOptionsRefreshToken);
-                return Ok(new ResponseBase<UserInfoViewModel>
-                {
-                    Info = null,
-                    Response = _mapper.Map<UserInfoViewModel>(request.Response)
-                });
+                return Ok(request);
             }
 
-            return BadRequest(new ResponseBase<UserInfoViewModel>
-            {
-                Info = request.Info,
-                Response = null
-            });
+            return BadRequest(request);
         }
     }
 }

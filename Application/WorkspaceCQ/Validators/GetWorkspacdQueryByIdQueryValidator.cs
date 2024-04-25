@@ -10,7 +10,7 @@ namespace Application.WorkspaceCQ.Validators
             RuleFor(x => x.Id)
                 .NotEmpty()
                 .WithMessage("O campo 'Id' não pode estar vazio.");
-                
+
         }
     }
 }

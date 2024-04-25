@@ -1,4 +1,6 @@
 ﻿using Domain.Abstract;
+using Domain.Enum;
+using Infra.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,10 +10,11 @@ using System.Text;
 
 namespace Services.Auth
 {
-    public class AuthService(IConfiguration configuration, IUnitOfWork unitOfWork) : IAuthService
+    public class AuthService(IConfiguration configuration, IUnitOfWork unitOfWork, TasksDbContext context) : IAuthService
     {
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
         private readonly IConfiguration _configuration = configuration;
+        private readonly TasksDbContext _context = context;
 
         public string GenerateJWT(string email, string Username)
         {
@@ -69,14 +72,23 @@ namespace Services.Auth
             return builder.ToString();
         }
 
-        public bool VerifyUniqueUsername(string userName)
+        public ValidationFieldsUserEnum VerifyUniqueUser(string email, string userName)
         {
-            return _unitOfWork.IUserRepository.Get(x => x.Username == userName) is null;
-        }
+            var users = _context.Users.ToList();
+            var emailExists = users.Exists(x => x.Email == email);
+            var usernameExists = users.Exists(x => x.Username == userName);
 
-        public bool VerifyUniqueEmail(string email)
-        {
-            return _unitOfWork.IUserRepository.Get(x => x.Email == email) is null;
+            if (emailExists)
+            {
+                return ValidationFieldsUserEnum.EmailUnavailable;
+            }
+
+            if (usernameExists)
+            {
+                return ValidationFieldsUserEnum.UsernameUnavailable;
+            }
+
+            return ValidationFieldsUserEnum.UsernameAndEmailUnavailable;
         }
     }
 }

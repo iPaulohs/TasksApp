@@ -1,5 +1,4 @@
 ﻿using Application.WorkspaceCQ.Comands;
-using Application.WorkspaceCQ.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,12 +15,12 @@ namespace API.Controllers
         {
             var request = await _mediator.Send(command);
 
-            if (request.Info is null)
+            if (request is null)
             {
-                return Ok(request.Response);
+                return Ok(request);
             }
 
-            return BadRequest(request.Info);
+            return BadRequest(request);
         }
 
         [HttpPost("Update-Workspace")]
@@ -29,12 +28,12 @@ namespace API.Controllers
         {
             var request = await _mediator.Send(command);
 
-            if (request.Info is null)
+            if (request is null)
             {
-                return Ok(request.Response);
+                return Ok(request);
             }
 
-            return BadRequest(request.Info);
+            return BadRequest(request);
         }
     }
 }

@@ -1,17 +1,19 @@
 ﻿using Application.Response;
 using Application.UserCQ.Commands;
 using Application.UserCQ.ViewModels;
+using AutoMapper;
 using Domain.Abstract;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 
 namespace Application.UserCQ.Handlers
 {
-    public class LoginUserCommandHandler(IAuthService authService, IUnitOfWork unitOfWork, IConfiguration configuration) : IRequestHandler<LoginUserCommand, ResponseBase<RefreshTokenViewModel>>
+    public class LoginUserCommandHandler(IAuthService authService, IUnitOfWork unitOfWork, IConfiguration configuration, IMapper mapper) : IRequestHandler<LoginUserCommand, ResponseBase<RefreshTokenViewModel>>
     {
         private readonly IAuthService _authService = authService;
         private readonly IConfiguration _configuration = configuration;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly IMapper _mapper = mapper;
         public async Task<ResponseBase<RefreshTokenViewModel>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
         {
             var user = _unitOfWork.IUserRepository.Get(x => x.Email!.ToLower() == request.Email!.ToLower());
@@ -40,21 +42,12 @@ namespace Application.UserCQ.Handlers
                 user.RefreshToken = _authService.GenerateRefreshJWT();
                 user.RefreshTokenExpirationTime = DateTime.Now.AddDays(refreshTokenValidityInDays);
                 await _unitOfWork.IUserRepository.Update(user);
-                _unitOfWork.CommitAsync();
+                _unitOfWork.Commit();
 
                 return new ResponseBase<RefreshTokenViewModel>
                 {
                     Info = null,
-                    Response = new RefreshTokenViewModel
-                    {
-                        Id = user.Id,
-                        Name = user.Name,
-                        Surname = user.Surname,
-                        Email = user.Email,
-                        Username = user.Username,
-                        RefreshToken = user.RefreshToken,
-                        Token = _authService.GenerateJWT(user.Email!, user.Username!)
-                    }
+                    Response = _mapper.Map<RefreshTokenViewModel>(user)
                 };
             }
 

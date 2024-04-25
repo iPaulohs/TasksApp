@@ -1,26 +1,24 @@
 ﻿using Application.Response;
 using Application.UserCQ.Commands;
 using Application.UserCQ.ViewModels;
+using AutoMapper;
 using Domain.Abstract;
 using Domain.Entity;
 using MediatR;
-using Microsoft.Extensions.Configuration;
 
 namespace Application.UserCQ.Handlers
 {
-    public class CreateUserCommandHandler(IAuthService authService, IUnitOfWork unitOfWork, IConfiguration configuration) : IRequestHandler<CreateUserCommand, ResponseBase<RefreshTokenViewModel>>
+    public class CreateUserCommandHandler(IAuthService authService, IUnitOfWork unitOfWork, IMapper mapper) : IRequestHandler<CreateUserCommand, ResponseBase<RefreshTokenViewModel>>
     {
         private readonly IAuthService _authService = authService;
-        private readonly IConfiguration _configuration = configuration;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly IMapper _mapper = mapper;
 
         public async Task<ResponseBase<RefreshTokenViewModel>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            var UsernameUnique = _authService.VerifyUniqueUsername(request.Username!);
+            var validFields = _authService.VerifyUniqueUser(request.Email!, request.Username!);
 
-            var emailUnique = _authService.VerifyUniqueEmail(request.Email!);
-
-            if (!UsernameUnique)
+            if (validFields is Domain.Enum.ValidationFieldsUserEnum.UsernameUnavailable)
             {
                 return new ResponseBase<RefreshTokenViewModel>
                 {
@@ -34,7 +32,7 @@ namespace Application.UserCQ.Handlers
                 };
             }
 
-            if (!emailUnique)
+            if (validFields is Domain.Enum.ValidationFieldsUserEnum.EmailUnavailable)
             {
                 return new ResponseBase<RefreshTokenViewModel>
                 {
@@ -48,38 +46,31 @@ namespace Application.UserCQ.Handlers
                 };
             }
 
-            var refreshToken = _authService.GenerateRefreshJWT();
-            _ = int.TryParse(_configuration["JWT:RefreshTokenValidityInMinutes"], out int refreshTokenValidityInMinutes);
-
-            User user = new()
+            if (validFields is Domain.Enum.ValidationFieldsUserEnum.UsernameAndEmailUnavailable)
             {
-                Name = request.Name,
-                Surname = request.Surname,
-                Username = request.Username,
-                Email = request.Email,
-                RefreshToken = refreshToken,
-                PasswordHash = _authService.HashingUserPassword(request.Password!),
-                RefreshTokenExpirationTime = DateTime.Now.AddMinutes(refreshTokenValidityInMinutes)
-            };
+                return new ResponseBase<RefreshTokenViewModel>
+                {
+                    Info = new()
+                    {
+                        Title = "Email e Username indisponível",
+                        StatusMessage = $"O email e o Username já estão sendo utilizados. ",
+                        Status = 400
+                    },
+                    Response = null
+                };
+            }
+
+            User user = _mapper.Map<User>(request);
 
             try
             {
                 var result = await _unitOfWork.IUserRepository.Create(user);
-                _unitOfWork.CommitAsync();
+                _unitOfWork.Commit();
 
                 return new ResponseBase<RefreshTokenViewModel>
                 {
                     Info = null,
-                    Response = new RefreshTokenViewModel
-                    {
-                        Id = user.Id,
-                        Name = user.Name,
-                        Surname = user.Surname,
-                        Email = user.Email,
-                        Username = user.Username,
-                        Token = _authService.GenerateJWT(user.Email!, user.Username!),
-                        RefreshToken = user.RefreshToken
-                    }
+                    Response = _mapper.Map<RefreshTokenViewModel>(user)
                 };
             }
             catch (Exception)

@@ -34,7 +34,7 @@ namespace Application.WorkspaceCQ.Handlers
             workspace.Arquived = request.Arquived;
 
             await _unitOfWork.IWorkspaceRepository.Update(workspace);
-            _unitOfWork.CommitAsync();
+            _unitOfWork.Commit();
             var _workspace = _mapper.Map<WorkspaceViewModel>(workspace);
 
             return new ResponseBase<WorkspaceViewModel>

@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddAppServices();
 builder.AddPersistence();
 builder.AddAppInjections();
+builder.AddSwaggerDocs();
 builder.AddAutoMapper();
 builder.Services.AddCors(x => x.AddPolicy(name: "Web App", policy =>
 {

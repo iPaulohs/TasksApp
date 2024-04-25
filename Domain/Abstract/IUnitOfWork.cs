@@ -6,6 +6,6 @@
         IListRepository IListRepository { get; }
         ICardRepository ICardRepository { get; }
         IUserRepository IUserRepository { get; }
-        public void CommitAsync();
+        public void Commit();
     }
 }

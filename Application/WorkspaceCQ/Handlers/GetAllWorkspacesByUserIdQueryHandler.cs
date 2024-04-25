@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Application.WorkspaceCQ.Handlers
 {
-    public class GetAllWorkspacesByUserIdQueryHandler(IUnitOfWork iunitOfWork, IMapper mapper): IRequestHandler<GetAllWorkspacesByUserIdQuery, ResponseBase<List<WorkspaceViewModel>>>
+    public class GetAllWorkspacesByUserIdQueryHandler(IUnitOfWork iunitOfWork, IMapper mapper) : IRequestHandler<GetAllWorkspacesByUserIdQuery, ResponseBase<List<WorkspaceViewModel>>>
     {
         private readonly IUnitOfWork _unitOfWork = iunitOfWork;
         private readonly IMapper _mapper = mapper;
@@ -16,7 +16,7 @@ namespace Application.WorkspaceCQ.Handlers
         {
             var user = _unitOfWork.IUserRepository.Get(x => x.Id == request.UserId);
 
-            if(user is null)
+            if (user is null)
             {
                 return new()
                 {

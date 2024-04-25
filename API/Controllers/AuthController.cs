@@ -13,10 +13,31 @@ namespace API.Controllers
     {
         private readonly IMediator _mediator = mediator;
         private readonly IConfiguration _configuration = configuration;
-        private readonly IMapper _mapper = mapper;
 
+        /// <summary>
+        /// Rota responsável pela criação de um usuário.
+        /// </summary>
+        /// <param name="command">
+        /// Um objeto CreateUserCommand
+        /// </param>
+        /// <returns>Os dados do usuário criado.</returns>
+        /// <remarks>
+        /// Exemplo de request:
+        /// ```
+        /// POST /Auth/Create-User
+        /// {
+        ///    "name": "Johh",
+        ///     "surname": "Doe",
+        ///     "username": "JDoe",
+        ///     "email": "jdoe@mail.com",
+        ///     "password": "123456"
+        /// }
+        /// ```
+        /// </remarks>
+        /// <response code="200">Retorna os dados de um novo usuário</response>
+        /// <response code="400">Se algum dado for digitado incorretamente</response>
         [HttpPost("Create-User")]
-        public async Task<ActionResult<ResponseBase<UserInfoViewModel>?>> CreateUser(CreateUserCommand command)
+        public async Task<ActionResult<ResponseBase<UserInfoViewModel>?>> CreateUser([FromBody] CreateUserCommand command)
         {
             var request = await _mediator.Send(command);
 
@@ -53,6 +74,25 @@ namespace API.Controllers
             return BadRequest(request);
         }
 
+        /// <summary>
+        /// Rota responsável pelo login do usuário.
+        /// </summary>
+        /// <param name="command">
+        /// Um objeto LoginUserCommand
+        /// </param>
+        /// <returns>Os dados do usuário logado.</returns>
+        /// <remarks>
+        /// Exemplo de request:
+        /// ```
+        /// POST /Auth/Create-User
+        /// {
+        ///     "email": "jdoe@mail.com",
+        ///     "password": "123456"
+        /// }
+        /// ```
+        /// </remarks>
+        /// <response code="200">Retorna os dados do usuário se o login tiver ocorrido corretamente</response>
+        /// <response code="400">Se algum dado for digitado incorretamente</response>
         [HttpPost("Login")]
         public async Task<ActionResult<ResponseBase<UserInfoViewModel>?>> Login(LoginUserCommand command)
         {
@@ -91,6 +131,26 @@ namespace API.Controllers
             return BadRequest(request);
         }
 
+
+        /// <summary>
+        /// Rota responsável pelo refresh token do usuário
+        /// </summary>
+        /// <param name="command">
+        /// Um objeto LoginUserCommand
+        /// </param>
+        /// <returns>Os dados do usuário logado.</returns>
+        /// <remarks>
+        /// Exemplo de request:
+        /// ```
+        /// POST /Auth/Create-User
+        /// {
+        ///     "username": "JDoe",
+        ///     "RefreshToken": "refreshtoken"
+        /// }
+        /// ```
+        /// </remarks>
+        /// <response code="200">Retorna os dados do usuário se o login tiver ocorrido corretamente</response>
+        /// <response code="400">Se algum dado for digitado incorretamente</response>
         [HttpPost("Refresh-Token")]
         public async Task<ActionResult<ResponseBase<UserInfoViewModel>?>> RefreshToken(RefreshTokenCommand command)
         {

@@ -36,7 +36,7 @@ namespace Application.WorkspaceCQ.Handlers
             };
 
             await _unitOfWork.IWorkspaceRepository.Create(workspace);
-            _unitOfWork.CommitAsync();
+            _unitOfWork.Commit();
 
             return new ResponseBase<WorkspaceViewModel>
             {
